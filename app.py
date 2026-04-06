@@ -1,5 +1,5 @@
 import html
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import streamlit as st
 
@@ -12,7 +12,8 @@ st.set_page_config(
 
 
 def now_text() -> str:
-    return datetime.now().strftime("%H:%M")
+    beijing_time = datetime.utcnow() + timedelta(hours=8)
+    return beijing_time.strftime("%H:%M")
 
 
 st.markdown(
@@ -408,7 +409,7 @@ if "messages" not in st.session_state:
             "role": "assistant",
             "label": "法智护航",
             "content": "您好，欢迎使用法智护航。未选择下方专项功能时，系统将默认按照普通法律咨询流程处理；选择专项功能后，再进入对应服务流程。",
-            "time": "刚刚",
+            "time": now_text(),
         }
     ]
 
@@ -433,7 +434,7 @@ def switch_mode(mode: str) -> None:
             "role": "assistant",
             "label": "法智护航",
             "content": mode_hint + MODE_CONFIG[mode]["reply"],
-            "time": "刚刚",
+            "time": now_text(),
         }
     )
     trim_messages()
@@ -459,7 +460,7 @@ def send_message() -> None:
             "role": "assistant",
             "label": "法智护航",
             "content": MODE_CONFIG[st.session_state.active_mode]["reply"],
-            "time": "刚刚",
+            "time": now_text(),
         }
     )
     trim_messages()
