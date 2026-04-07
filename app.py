@@ -871,7 +871,7 @@ with right_col:
         "文字输入",
         key="user_input",
         label_visibility="collapsed",
-        placeholder="请输入您的法律咨询问题、案件描述、文书内容或合同需求...",
+        placeholder=" ",
         height=110,
     )
     st.markdown('<div class="send-row">', unsafe_allow_html=True)
