@@ -29,8 +29,8 @@ def load_avatar_base64(image_path: str = "assistant_avatar.jpg") -> str:
 ASSISTANT_AVATAR_BASE64 = load_avatar_base64()
 
 # 腾讯元器 OpenAPI 配置
-APP_KEY = "FSP02pxwQHtKiGy7j0uHCRLibwpZ83Vx"
-APP_ID = "2038904769354925120"
+APP_KEY = st.secrets["APP_KEY"]
+APP_ID = st.secrets["APP_ID"]
 YUANQI_URL = "https://yuanqi.tencent.com/openapi/v1/agent/chat/completions"
 
 NEWS_CONTENT = [
