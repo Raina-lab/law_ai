@@ -593,7 +593,12 @@ if "messages" not in st.session_state:
         {
             "role": "assistant",
             "label": "法智护航",
-            "content": "您好，欢迎使用法智护航。未选择下方专项功能时，系统将默认按照普通法律咨询流程处理；选择专项功能后，再进入对应服务流程。",
+            "content": """您好，欢迎使用法智护航。未选择下方专项功能时，系统将默认按照普通法律咨询流程处理；选择专项功能后，再进入对应服务流程。
+
+示例问题：
+1. 工作3年2个月，月薪1万5，被裁该赔多少？
+2. N还是2N？具体怎么算？
+3. 公司拖欠工资 / 不缴社保？""",
             "time": now_text(),
         }
     ]
@@ -754,7 +759,7 @@ with right_col:
         unsafe_allow_html=True,
     )
 
-    with st.container(height=420, border=True):
+    with st.container(border=True):
         for msg in st.session_state.messages:
             role = "user" if msg["role"] == "user" else "assistant"
             safe_label = html.escape(msg.get("label", "消息"))
