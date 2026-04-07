@@ -1033,24 +1033,29 @@ with right_col:
             )
 
     st.markdown('<div class="func-wrap">', unsafe_allow_html=True)
-    btn1, btn2, btn3 = st.columns(3)
+btn0, btn1, btn2, btn3 = st.columns(4)
 
-    with btn1:
-        if st.button("文书生成", use_container_width=True):
-            switch_mode("文书生成")
-            st.rerun()
+with btn0:
+    if st.button("法律咨询", use_container_width=True):
+        switch_mode("法律咨询")
+        st.rerun()
 
-    with btn2:
-        if st.button("文书审查", use_container_width=True):
-            switch_mode("文书审查")
-            st.rerun()
+with btn1:
+    if st.button("文书生成", use_container_width=True):
+        switch_mode("文书生成")
+        st.rerun()
 
-    with btn3:
-        if st.button("合同生成", use_container_width=True):
-            switch_mode("合同生成")
-            st.rerun()
+with btn2:
+    if st.button("文书审查", use_container_width=True):
+        switch_mode("文书审查")
+        st.rerun()
 
-    st.markdown('</div>', unsafe_allow_html=True)
+with btn3:
+    if st.button("合同生成", use_container_width=True):
+        switch_mode("合同生成")
+        st.rerun()
+
+st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown('<div class="input-shell">', unsafe_allow_html=True)
     st.markdown('<div class="input-title">文字输入</div>', unsafe_allow_html=True)
