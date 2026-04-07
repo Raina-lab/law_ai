@@ -26,11 +26,33 @@ def load_avatar_base64(image_path: str = "assistant_avatar.jpg") -> str:
     return ""
 
 
+def read_uploaded_files(files) -> str:
+    if not files:
+        return ""
+
+    parts = []
+    for file in files:
+        try:
+            suffix = Path(file.name).suffix.lower()
+            if suffix in [".txt", ".md", ".csv", ".json", ".py"]:
+                text = file.read().decode("utf-8", errors="ignore").strip()
+                if text:
+                    preview = text[:4000]
+                    parts.append(f"文件名：{file.name}\n文件内容：\n{preview}")
+                else:
+                    parts.append(f"文件名：{file.name}\n文件内容为空。")
+            else:
+                parts.append(f"已上传文件：{file.name}（当前版本暂不自动解析该格式内容，可结合文件名和用户描述进行处理）")
+        except Exception:
+            parts.append(f"已上传文件：{file.name}（读取失败，请结合用户描述处理）")
+
+    return "\n\n".join(parts)
+
+
 ASSISTANT_AVATAR_BASE64 = load_avatar_base64()
 
-# 腾讯元器 OpenAPI 配置
-APP_KEY = st.secrets["APP_KEY"]
-APP_ID = st.secrets["APP_ID"]
+APP_KEY = str(st.secrets["APP_KEY"]).strip()
+APP_ID = str(st.secrets["APP_ID"]).strip()
 YUANQI_URL = "https://yuanqi.tencent.com/openapi/v1/agent/chat/completions"
 
 NEWS_CONTENT = [
@@ -130,9 +152,9 @@ NEWS_CONTENT = [
 ]
 
 st.markdown(
-    f"""
+    """
     <style>
-        :root {{
+        :root {
             --bg-1: #f5f8fc;
             --bg-2: #edf3fa;
             --line: rgba(148, 163, 184, 0.11);
@@ -145,70 +167,124 @@ st.markdown(
             --accent-soft: rgba(37, 99, 235, 0.10);
             --shadow-lg: 0 18px 40px rgba(15, 23, 42, 0.08);
             --shadow-md: 0 10px 24px rgba(15, 23, 42, 0.06);
-        }}
+        }
 
-        .stApp {{
+        .stApp {
             background:
                 radial-gradient(circle at 18px 18px, var(--line) 1.5px, transparent 1.7px),
                 linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 100%);
             background-size: 36px 36px, cover;
-        }}
+        }
 
-        header[data-testid="stHeader"] {{
+        header[data-testid="stHeader"] {
             background: rgba(255,255,255,0.35);
-        }}
+        }
 
-        div[data-testid="stDecoration"] {{
+        div[data-testid="stDecoration"] {
             display: none;
-        }}
+        }
 
-        .main .block-container {{
+        .main .block-container {
             max-width: 1380px;
             padding-top: 0.5rem;
             padding-bottom: 0.9rem;
-        }}
+        }
 
-        .brand-card {{
-            background: linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.80) 100%);
-            border: 1px solid var(--card-border);
-            border-radius: 30px;
-            padding: 28px 26px;
-            box-shadow: var(--shadow-lg);
-            backdrop-filter: blur(14px);
-        }}
+        .brand-card {
+            position: relative;
+            overflow: hidden;
+            background:
+                linear-gradient(135deg, rgba(255,255,255,0.97) 0%, rgba(244,248,255,0.94) 52%, rgba(232,242,255,0.92) 100%);
+            border: 1px solid rgba(203, 213, 225, 0.66);
+            border-radius: 34px;
+            padding: 34px 30px 30px 30px;
+            box-shadow:
+                0 24px 56px rgba(15, 23, 42, 0.08),
+                inset 0 1px 0 rgba(255,255,255,0.8);
+            backdrop-filter: blur(18px);
+        }
 
-        .brand-title {{
-            font-size: 2.25rem;
+        .brand-card::before {
+            content: "";
+            position: absolute;
+            width: 220px;
+            height: 220px;
+            right: -70px;
+            top: -90px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(37, 99, 235, 0.14) 0%, rgba(37, 99, 235, 0.03) 58%, transparent 74%);
+        }
+
+        .brand-card::after {
+            content: "";
+            position: absolute;
+            left: -40px;
+            bottom: -55px;
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(96, 165, 250, 0.10) 0%, rgba(96, 165, 250, 0.02) 60%, transparent 76%);
+        }
+
+        .brand-kicker {
+            position: relative;
+            z-index: 1;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            margin-bottom: 14px;
+            border-radius: 999px;
+            background: rgba(37, 99, 235, 0.08);
+            border: 1px solid rgba(37, 99, 235, 0.12);
+            color: #2563eb;
+            font-size: 0.84rem;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+        }
+
+        .brand-title {
+            position: relative;
+            z-index: 1;
+            font-size: 2.5rem;
+            line-height: 1.08;
             font-weight: 900;
-            color: var(--text-main);
-            margin-bottom: 0.5rem;
-            letter-spacing: -0.8px;
-        }}
+            color: #0f172a;
+            margin-bottom: 0.9rem;
+            letter-spacing: -1px;
+        }
 
-        .brand-subtitle {{
-            font-size: 1rem;
-            line-height: 1.9;
-            color: var(--text-sub);
-            max-width: 90%;
-        }}
+        .brand-subtitle {
+            position: relative;
+            z-index: 1;
+            font-size: 1.02rem;
+            line-height: 1.95;
+            color: #64748b;
+            max-width: 92%;
+        }
 
-        .panel-head {{
+        .brand-highlight {
+            color: #2563eb;
+            font-weight: 800;
+        }
+
+        .panel-head {
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 16px;
             margin-bottom: 12px;
             max-width: 860px;
-        }}
+        }
 
-        .panel-title {{
+        .panel-title {
             font-size: 1.42rem;
             font-weight: 850;
             color: var(--text-main);
             letter-spacing: -0.4px;
-        }}
+        }
 
-        .mode-badge {{
+        .mode-badge {
             display: inline-flex;
             align-items: center;
             padding: 8px 14px;
@@ -220,58 +296,58 @@ st.markdown(
             font-weight: 700;
             white-space: nowrap;
             box-shadow: 0 6px 14px rgba(37, 99, 235, 0.08);
-        }}
+        }
 
-        div[data-testid="stVerticalBlockBorderWrapper"] {{
+        div[data-testid="stVerticalBlockBorderWrapper"] {
             border-radius: 26px !important;
             border: 1px solid rgba(203, 213, 225, 0.78) !important;
             background: linear-gradient(180deg, rgba(255,255,255,0.84) 0%, rgba(255,255,255,0.76) 100%) !important;
             box-shadow: var(--shadow-md) !important;
             backdrop-filter: blur(12px) !important;
-        }}
+        }
 
-        div[data-testid="stVerticalBlockBorderWrapper"] > div {{
+        div[data-testid="stVerticalBlockBorderWrapper"] > div {
             padding: 14px 16px !important;
-        }}
+        }
 
-        div[data-testid="stChatMessage"] {{
+        div[data-testid="stChatMessage"] {
             background: transparent !important;
             border: none !important;
             padding: 0 !important;
             margin: 0 0 14px 0 !important;
-        }}
+        }
 
-        div[data-testid="stChatMessageAvatar"] {{
+        div[data-testid="stChatMessageAvatar"] {
             display: none !important;
-        }}
+        }
 
-        div[data-testid="stChatMessageContent"] {{
+        div[data-testid="stChatMessageContent"] {
             width: 100%;
             max-width: 100%;
             padding: 0 !important;
-        }}
+        }
 
-        .msg-row {{
+        .msg-row {
             display: flex;
             width: 100%;
-        }}
+        }
 
-        .msg-row.user {{
+        .msg-row.user {
             justify-content: flex-end;
-        }}
+        }
 
-        .msg-row.assistant {{
+        .msg-row.assistant {
             justify-content: flex-start;
-        }}
+        }
 
-        .assistant-wrap {{
+        .assistant-wrap {
             display: flex;
             align-items: flex-start;
             gap: 10px;
             width: 100%;
-        }}
+        }
 
-        .assistant-avatar {{
+        .assistant-avatar {
             width: 44px;
             height: 44px;
             min-width: 44px;
@@ -282,13 +358,13 @@ st.markdown(
             box-shadow: 0 6px 16px rgba(15, 23, 42, 0.15);
             border: 2px solid rgba(255,255,255,0.92);
             margin-top: 2px;
-        }}
+        }
 
-        .assistant-avatar.fallback {{
+        .assistant-avatar.fallback {
             background: linear-gradient(135deg, #64748b 0%, #94a3b8 100%);
-        }}
+        }
 
-        .msg-bubble {{
+        .msg-bubble {
             max-width: 88%;
             border-radius: 20px;
             padding: 14px 16px;
@@ -297,145 +373,145 @@ st.markdown(
             font-size: 0.97rem;
             word-break: break-word;
             white-space: normal;
-        }}
+        }
 
-        .msg-bubble.user {{
+        .msg-bubble.user {
             background: linear-gradient(135deg, #2563eb 0%, #60a5fa 100%);
             color: #ffffff;
             border-bottom-right-radius: 8px;
-        }}
+        }
 
-        .msg-bubble.assistant {{
+        .msg-bubble.assistant {
             background: linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.96) 100%);
             border: 1px solid rgba(203, 213, 225, 0.72);
             color: var(--text-main);
             border-bottom-left-radius: 8px;
-        }}
+        }
 
-        .msg-meta {{
+        .msg-meta {
             display: flex;
             justify-content: space-between;
             align-items: center;
             gap: 12px;
             margin-bottom: 7px;
             font-size: 0.8rem;
-        }}
+        }
 
-        .msg-name {{
+        .msg-name {
             font-weight: 800;
-        }}
+        }
 
-        .msg-time {{
+        .msg-time {
             font-size: 0.76rem;
             white-space: nowrap;
-        }}
+        }
 
-        .assistant .msg-time {{
+        .assistant .msg-time {
             color: var(--text-sub);
             opacity: 0.78;
-        }}
+        }
 
-        .user .msg-time {{
+        .user .msg-time {
             color: rgba(255,255,255,0.92);
             opacity: 0.95;
-        }}
+        }
 
         .markdown-bubble h1,
         .markdown-bubble h2,
         .markdown-bubble h3,
         .markdown-bubble h4,
         .markdown-bubble h5,
-        .markdown-bubble h6 {{
+        .markdown-bubble h6 {
             color: #0f172a;
             margin-top: 0.35rem;
             margin-bottom: 0.55rem;
             line-height: 1.45;
-        }}
+        }
 
-        .markdown-bubble p {{
+        .markdown-bubble p {
             margin-bottom: 0.6rem;
             color: #0f172a;
-        }}
+        }
 
         .markdown-bubble ul,
-        .markdown-bubble ol {{
+        .markdown-bubble ol {
             padding-left: 1.2rem;
             margin-bottom: 0.6rem;
-        }}
+        }
 
-        .markdown-bubble li {{
+        .markdown-bubble li {
             margin-bottom: 0.25rem;
             color: #0f172a;
-        }}
+        }
 
-        .markdown-bubble strong {{
+        .markdown-bubble strong {
             font-weight: 800;
             color: #0f172a;
-        }}
+        }
 
-        .markdown-bubble code {{
+        .markdown-bubble code {
             background: rgba(148, 163, 184, 0.12);
             padding: 2px 6px;
             border-radius: 6px;
             font-size: 0.9em;
-        }}
+        }
 
-        .markdown-bubble pre {{
+        .markdown-bubble pre {
             background: #f8fafc;
             border: 1px solid rgba(203, 213, 225, 0.8);
             border-radius: 12px;
             padding: 12px;
             overflow-x: auto;
-        }}
+        }
 
-        .markdown-bubble blockquote {{
+        .markdown-bubble blockquote {
             border-left: 3px solid rgba(37, 99, 235, 0.35);
             padding-left: 10px;
             color: #475569;
             margin: 0.6rem 0;
-        }}
+        }
 
-        .typing-dots {{
+        .typing-dots {
             display: inline-flex;
             gap: 6px;
             align-items: center;
             padding: 4px 0 2px 0;
-        }}
+        }
 
-        .typing-dots span {{
+        .typing-dots span {
             width: 8px;
             height: 8px;
             border-radius: 50%;
             background: #94a3b8;
             display: inline-block;
             animation: blink 1.2s infinite ease-in-out;
-        }}
+        }
 
-        .typing-dots span:nth-child(2) {{
+        .typing-dots span:nth-child(2) {
             animation-delay: 0.2s;
-        }}
+        }
 
-        .typing-dots span:nth-child(3) {{
+        .typing-dots span:nth-child(3) {
             animation-delay: 0.4s;
-        }}
+        }
 
-        @keyframes blink {{
-            0%, 80%, 100% {{
+        @keyframes blink {
+            0%, 80%, 100% {
                 opacity: 0.28;
                 transform: translateY(0);
-            }}
-            40% {{
+            }
+            40% {
                 opacity: 1;
                 transform: translateY(-2px);
-            }}
-        }}
+            }
+        }
 
-        .func-wrap {{
+        .func-wrap {
             max-width: 860px;
             margin-bottom: 14px;
-        }}
+        }
 
-        div[data-testid="stButton"] button {{
+        div[data-testid="stButton"] button {
             width: 100%;
             border-radius: 18px;
             border: 1px solid rgba(37, 99, 235, 0.10);
@@ -446,16 +522,16 @@ st.markdown(
             padding-bottom: 0.76rem;
             box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
             transition: all 0.18s ease;
-        }}
+        }
 
-        div[data-testid="stButton"] button:hover {{
+        div[data-testid="stButton"] button:hover {
             transform: translateY(-1px);
             border-color: rgba(37, 99, 235, 0.22);
             background: linear-gradient(180deg, #ffffff 0%, #eaf3ff 100%);
             color: var(--accent);
-        }}
+        }
 
-        .input-shell {{
+        .input-shell {
             max-width: 860px;
             background: linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(241,247,255,0.92) 100%);
             border: 1px solid rgba(203, 213, 225, 0.72);
@@ -463,25 +539,32 @@ st.markdown(
             padding: 16px;
             box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
             backdrop-filter: blur(10px);
-        }}
+        }
 
-        .input-title {{
+        .input-title {
             font-size: 1.08rem;
             font-weight: 850;
             color: var(--text-main);
             margin-bottom: 8px;
             text-align: center;
-        }}
+        }
 
-        .input-tip {{
+        .input-tip {
             font-size: 0.88rem;
             color: var(--text-sub);
             margin-bottom: 10px;
             text-align: center;
             line-height: 1.7;
-        }}
+        }
 
-        .input-shell div[data-testid="stTextArea"] textarea {{
+        .upload-title {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--text-sub);
+            margin: 10px 0 8px 2px;
+        }
+
+        .input-shell div[data-testid="stTextArea"] textarea {
             background: rgba(255,255,255,0.98) !important;
             border: 1px solid rgba(203, 213, 225, 0.65) !important;
             border-radius: 18px !important;
@@ -490,89 +573,168 @@ st.markdown(
             padding-top: 14px !important;
             font-size: 0.98rem !important;
             box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.02) !important;
-        }}
+        }
 
-        .input-shell div[data-testid="stTextArea"] textarea:focus {{
+        .input-shell div[data-testid="stTextArea"] textarea:focus {
             border-color: rgba(37, 99, 235, 0.35) !important;
             box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08) !important;
-        }}
+        }
 
-        .input-shell div[data-testid="stTextArea"] label {{
+        .input-shell div[data-testid="stTextArea"] label {
             display: none !important;
-        }}
+        }
 
-        .send-row div[data-testid="stButton"] button {{
+        .input-shell div[data-testid="stFileUploader"] {
+            background: rgba(255,255,255,0.72);
+            border-radius: 18px;
+            padding: 8px 10px;
+            border: 1px dashed rgba(148, 163, 184, 0.35);
+        }
+
+        .send-row div[data-testid="stButton"] button {
             background: linear-gradient(135deg, #2563eb 0%, #60a5fa 100%);
             color: white;
             border: none;
             border-radius: 18px;
             box-shadow: 0 14px 26px rgba(37, 99, 235, 0.24);
-        }}
+        }
 
-        .send-row div[data-testid="stButton"] button:hover {{
+        .send-row div[data-testid="stButton"] button:hover {
             color: white;
             background: linear-gradient(135deg, #1d4ed8 0%, #4f9cf5 100%);
-        }}
+        }
 
-        .news-wrap {{
+        .news-wrap {
             max-width: 100%;
-        }}
+        }
 
-        .news-heading-inline {{
+        .news-heading-inline {
             font-size: 1.18rem;
             font-weight: 850;
             color: var(--text-main);
             margin-bottom: 10px;
             letter-spacing: -0.2px;
-        }}
+        }
 
-        .news-section-inline {{
+        .news-section-inline {
             font-size: 0.98rem;
             font-weight: 850;
             color: #17305c;
             margin: 16px 0 10px 0;
             padding-left: 10px;
             border-left: 3px solid rgba(37, 99, 235, 0.28);
-        }}
+        }
 
-        .news-item-inline {{
+        .news-item-inline {
             padding: 12px 12px 12px 14px;
             margin-bottom: 12px;
             border: 1px solid rgba(226, 232, 240, 0.95);
             border-radius: 18px;
             background: linear-gradient(180deg, rgba(255,255,255,0.88) 0%, rgba(248,250,252,0.88) 100%);
             box-shadow: 0 6px 14px rgba(15, 23, 42, 0.03);
-        }}
+        }
 
-        .news-item-title-inline {{
+        .news-item-title-inline {
             font-weight: 780;
             color: #0f172a;
             margin-bottom: 6px;
             line-height: 1.6;
-        }}
+        }
 
-        .news-body-inline {{
+        .news-body-inline {
             color: #475569;
             line-height: 1.78;
             font-size: 0.93rem;
-        }}
+        }
 
-        @media (max-width: 1100px) {{
-            .panel-head {{
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-1: #0f172a;
+                --bg-2: #111827;
+                --line: rgba(148, 163, 184, 0.08);
+                --card: rgba(30, 41, 59, 0.82);
+                --card-border: rgba(148, 163, 184, 0.18);
+                --text-main: #f8fafc;
+                --text-sub: #cbd5e1;
+                --text-soft: #cbd5e1;
+                --accent: #60a5fa;
+                --accent-soft: rgba(96, 165, 250, 0.16);
+            }
+
+            .brand-card,
+            .input-shell,
+            .news-item-inline,
+            .msg-bubble.assistant {
+                background: rgba(30, 41, 59, 0.92) !important;
+                color: #f8fafc !important;
+                border-color: rgba(148, 163, 184, 0.22) !important;
+            }
+
+            .brand-title,
+            .panel-title,
+            .news-heading-inline,
+            .news-item-title-inline,
+            .markdown-bubble h1,
+            .markdown-bubble h2,
+            .markdown-bubble h3,
+            .markdown-bubble h4,
+            .markdown-bubble h5,
+            .markdown-bubble h6,
+            .markdown-bubble p,
+            .markdown-bubble li,
+            .markdown-bubble strong,
+            .msg-bubble.assistant,
+            .input-title,
+            .brand-kicker {
+                color: #f8fafc !important;
+            }
+
+            .brand-subtitle,
+            .news-body-inline,
+            .input-tip,
+            .upload-title,
+            .msg-time,
+            .assistant .msg-time {
+                color: #cbd5e1 !important;
+            }
+
+            .brand-highlight {
+                color: #93c5fd !important;
+            }
+
+            .input-shell div[data-testid="stTextArea"] textarea {
+                background: rgba(15, 23, 42, 0.92) !important;
+                color: #f8fafc !important;
+                border-color: rgba(148, 163, 184, 0.24) !important;
+            }
+
+            .input-shell div[data-testid="stFileUploader"] {
+                background: rgba(15, 23, 42, 0.72) !important;
+                border-color: rgba(148, 163, 184, 0.24) !important;
+            }
+
+            div[data-testid="stVerticalBlockBorderWrapper"] {
+                background: rgba(30, 41, 59, 0.82) !important;
+                border-color: rgba(148, 163, 184, 0.18) !important;
+            }
+        }
+
+        @media (max-width: 1100px) {
+            .panel-head {
                 flex-direction: column;
                 align-items: flex-start;
-            }}
+            }
 
             .func-wrap,
             .input-shell,
-            .panel-head {{
+            .panel-head {
                 max-width: 100%;
-            }}
+            }
 
-            .brand-subtitle {{
+            .brand-subtitle {
                 max-width: 100%;
-            }}
-        }}
+            }
+        }
     </style>
     """,
     unsafe_allow_html=True,
@@ -681,20 +843,44 @@ def switch_mode(mode: str) -> None:
 
 def send_message() -> None:
     content = st.session_state.get("user_input", "").strip()
-    if not content:
+    files = st.session_state.get("uploaded_files", [])
+
+    if not content and not files:
         return
+
+    file_text = read_uploaded_files(files)
+    user_display = content if content else "已上传文件，请结合附件内容处理。"
+
+    if file_text:
+        if content:
+            api_input = f"{content}\n\n【用户上传文件】\n{file_text}"
+        else:
+            api_input = f"请结合以下上传文件内容进行处理：\n\n{file_text}"
+    else:
+        api_input = content
 
     st.session_state.messages.append(
         {
             "role": "user",
             "label": "用户",
-            "content": content,
+            "content": user_display,
             "time": now_text(),
         }
     )
 
+    if files:
+        uploaded_names = "\n".join([f"- {f.name}" for f in files])
+        st.session_state.messages.append(
+            {
+                "role": "assistant",
+                "label": "系统附件",
+                "content": f"已接收以下文件：\n{uploaded_names}",
+                "time": now_text(),
+            }
+        )
+
     st.session_state.is_typing = True
-    reply = call_yuanqi_api(st.session_state.active_mode, content)
+    reply = call_yuanqi_api(st.session_state.active_mode, api_input)
 
     st.session_state.messages.append(
         {
@@ -716,16 +902,21 @@ with left_col:
     st.markdown(
         """
         <div class="brand-card">
+            <div class="brand-kicker">劳动法智能服务平台</div>
             <div class="brand-title">法智护航</div>
             <div class="brand-subtitle">
-                聚焦劳动关系认定、欠薪追责、竞业限制与社保保障等劳动法热点，左侧栏目实时汇集典型案例、裁判规则与维权指引。
+                聚焦<span class="brand-highlight">劳动关系认定</span>、
+                <span class="brand-highlight">欠薪追责</span>、
+                <span class="brand-highlight">竞业限制</span>与
+                <span class="brand-highlight">社保保障</span>等劳动法热点，
+                左侧栏目实时汇集典型案例、裁判规则与维权指引。
             </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    with st.container(height=650, border=True):
+    with st.container(height=780, border=True):
         st.markdown('<div class="news-wrap">', unsafe_allow_html=True)
         st.markdown('<div class="news-heading-inline">新闻速递</div>', unsafe_allow_html=True)
 
@@ -752,14 +943,14 @@ with right_col:
     st.markdown(
         f"""
         <div class="panel-head">
-            <div class="panel-title">智能法律服务台</div>
+            <div class="panel-title">开封府劳动仲裁官</div>
             <div class="mode-badge">当前模式：{st.session_state.active_mode}</div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    with st.container(border=True):
+    with st.container(height=560, border=True):
         for msg in st.session_state.messages:
             role = "user" if msg["role"] == "user" else "assistant"
             safe_label = html.escape(msg.get("label", "消息"))
@@ -871,8 +1062,16 @@ with right_col:
         "文字输入",
         key="user_input",
         label_visibility="collapsed",
-        placeholder=" ",
+        placeholder="请输入您的法律咨询问题、案件描述、文书内容或合同需求...",
         height=110,
+    )
+    st.markdown('<div class="upload-title">上传附件</div>', unsafe_allow_html=True)
+    st.file_uploader(
+        "上传附件",
+        key="uploaded_files",
+        label_visibility="collapsed",
+        accept_multiple_files=True,
+        type=["txt", "md", "csv", "json", "pdf", "doc", "docx", "png", "jpg", "jpeg"],
     )
     st.markdown('<div class="send-row">', unsafe_allow_html=True)
     st.button("发送", use_container_width=True, on_click=send_message)
