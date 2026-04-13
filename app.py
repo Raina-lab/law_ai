@@ -50,9 +50,15 @@ def read_uploaded_files(files) -> str:
 
 
 ASSISTANT_AVATAR_BASE64 = load_avatar_base64()
+def load_image_base64(path: str) -> str:
+    p = Path(path)
+    return base64.b64encode(p.read_bytes()).decode("utf-8") if p.exists() else ""
 
-APP_KEY = str(st.secrets["APP_KEY"]).strip()
-APP_ID = str(st.secrets["APP_ID"]).strip()
+PAGE_BG_BASE64 = load_image_base64("background1.jpg")
+NEWS_BG_BASE64 = load_image_base64("background2.jpg")
+
+APP_KEY = st.secrets["APP_kEY"]
+APP_ID = st.secrets["APP_ID"]
 YUANQI_URL = "https://yuanqi.tencent.com/openapi/v1/agent/chat/completions"
 
 NEWS_CONTENT = [
@@ -154,7 +160,56 @@ NEWS_CONTENT = [
 st.markdown(
     """
     <style>
-        :root {
+        :root
+             html {
+                color-scheme: light !important;
+            }
+
+            body, .stApp {
+                color-scheme: light !important;
+            }
+
+            [data-testid="stAppViewContainer"] {
+                color: #0f172a !important;
+            }
+
+            .panel-title,
+            .news-heading-inline,
+            .news-section-inline,
+            .news-item-title-inline,
+            .input-title,
+            .brand-title,
+            .brand-kicker,
+            .markdown-bubble h1,
+            .markdown-bubble h2,
+            .markdown-bubble h3,
+            .markdown-bubble h4,
+            .markdown-bubble h5,
+            .markdown-bubble h6,
+            .markdown-bubble p,
+            .markdown-bubble li,
+            .markdown-bubble strong {
+                color: #0f172a !important;
+            }
+
+            .brand-subtitle,
+            .news-body-inline,
+            .input-tip,
+            .upload-title,
+            .msg-time,
+            .assistant .msg-time {
+                color: #475569 !important;
+            }
+
+            .msg-bubble.assistant,
+            .news-item-inline,
+            .input-shell,
+            .brand-card {
+                background: rgba(255,255,255,0.88) !important;
+                color: #0f172a !important;
+                border-color: rgba(203, 213, 225, 0.75) !important;
+            }
+            {
             --bg-1: #f5f8fc;
             --bg-2: #edf3fa;
             --line: rgba(148, 163, 184, 0.11);
@@ -169,12 +224,29 @@ st.markdown(
             --shadow-md: 0 10px 24px rgba(15, 23, 42, 0.06);
         }
 
-        .stApp {
-            background:
-                radial-gradient(circle at 18px 18px, var(--line) 1.5px, transparent 1.7px),
-                linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 100%);
-            background-size: 36px 36px, cover;
+        html, body, .stApp {
+            background: transparent !important;
         }
+
+        [data-testid="stAppViewContainer"] {
+            background:
+                linear-gradient(rgba(255,255,255,0.65), rgba(255,255,255,0.75)),
+                url("data:image/jpeg;base64,__PAGE_BG__") center/cover fixed;
+        }
+
+        .main {
+            background: transparent !important;
+            min-height: 100vh;
+        }
+
+        .news-wrap {
+            max-width: 100%;
+            background: rgba(255,255,255,0.65);
+            border-radius: 22px;
+            padding: 16px 14px 20px 14px;
+            min-height: 100%;
+            backdrop-filter: blur(10px);
+        }   
 
         header[data-testid="stHeader"] {
             background: rgba(255,255,255,0.35);
@@ -185,6 +257,7 @@ st.markdown(
         }
 
         .main .block-container {
+            background: transparent !important;
             max-width: 1380px;
             padding-top: 0.5rem;
             padding-bottom: 0.9rem;
@@ -606,6 +679,7 @@ st.markdown(
 
         .news-wrap {
             max-width: 100%;
+            border-radius: 22px;
         }
 
         .news-heading-inline {
@@ -628,10 +702,11 @@ st.markdown(
         .news-item-inline {
             padding: 12px 12px 12px 14px;
             margin-bottom: 12px;
-            border: 1px solid rgba(226, 232, 240, 0.95);
+            border: 1px solid rgba(255,255,255,0.35);
             border-radius: 18px;
-            background: linear-gradient(180deg, rgba(255,255,255,0.88) 0%, rgba(248,250,252,0.88) 100%);
-            box-shadow: 0 6px 14px rgba(15, 23, 42, 0.03);
+            background: rgba(255,255,255,0.65);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08);
         }
 
         .news-item-title-inline {
@@ -647,77 +722,10 @@ st.markdown(
             font-size: 0.93rem;
         }
 
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --bg-1: #0f172a;
-                --bg-2: #111827;
-                --line: rgba(148, 163, 184, 0.08);
-                --card: rgba(30, 41, 59, 0.82);
-                --card-border: rgba(148, 163, 184, 0.18);
-                --text-main: #f8fafc;
-                --text-sub: #cbd5e1;
-                --text-soft: #cbd5e1;
-                --accent: #60a5fa;
-                --accent-soft: rgba(96, 165, 250, 0.16);
-            }
-
-            .brand-card,
-            .input-shell,
-            .news-item-inline,
-            .msg-bubble.assistant {
-                background: rgba(30, 41, 59, 0.92) !important;
-                color: #f8fafc !important;
-                border-color: rgba(148, 163, 184, 0.22) !important;
-            }
-
-            .brand-title,
-            .panel-title,
-            .news-heading-inline,
-            .news-item-title-inline,
-            .markdown-bubble h1,
-            .markdown-bubble h2,
-            .markdown-bubble h3,
-            .markdown-bubble h4,
-            .markdown-bubble h5,
-            .markdown-bubble h6,
-            .markdown-bubble p,
-            .markdown-bubble li,
-            .markdown-bubble strong,
-            .msg-bubble.assistant,
-            .input-title,
-            .brand-kicker {
-                color: #f8fafc !important;
-            }
-
-            .brand-subtitle,
-            .news-body-inline,
-            .input-tip,
-            .upload-title,
-            .msg-time,
-            .assistant .msg-time {
-                color: #cbd5e1 !important;
-            }
-
-            .brand-highlight {
-                color: #93c5fd !important;
-            }
-
-            .input-shell div[data-testid="stTextArea"] textarea {
-                background: rgba(15, 23, 42, 0.92) !important;
-                color: #f8fafc !important;
-                border-color: rgba(148, 163, 184, 0.24) !important;
-            }
-
-            .input-shell div[data-testid="stFileUploader"] {
-                background: rgba(15, 23, 42, 0.72) !important;
-                border-color: rgba(148, 163, 184, 0.24) !important;
-            }
-
-            div[data-testid="stVerticalBlockBorderWrapper"] {
-                background: rgba(30, 41, 59, 0.82) !important;
-                border-color: rgba(148, 163, 184, 0.18) !important;
-            }
+        .news-wrap::before {
+            display: none !important;
         }
+
 
         @media (max-width: 1100px) {
             .panel-head {
@@ -735,8 +743,12 @@ st.markdown(
                 max-width: 100%;
             }
         }
+
+        footer {
+            display: none !important;
+        }
     </style>
-    """,
+    """.replace("__PAGE_BG__", PAGE_BG_BASE64).replace("__NEWS_BG__", NEWS_BG_BASE64),
     unsafe_allow_html=True,
 )
 
@@ -916,17 +928,22 @@ with left_col:
         unsafe_allow_html=True,
     )
 
-    with st.container(height=780, border=True):
-        st.markdown('<div class="news-wrap">', unsafe_allow_html=True)
-        st.markdown('<div class="news-heading-inline">新闻速递</div>', unsafe_allow_html=True)
+    with st.container(height=600, border=True):
+
+        st.markdown(
+            '<div class="news-wrap"><div class="news-heading-inline">新闻速递</div>',
+            unsafe_allow_html=True,
+        )
 
         for section in NEWS_CONTENT:
             st.markdown(
                 f'<div class="news-section-inline">{html.escape(section["section"])}</div>',
                 unsafe_allow_html=True,
             )
+
             for item in section["items"]:
                 body_html = html.escape(item["body"]).replace("\n", "<br>")
+
                 st.markdown(
                     f"""
                     <div class="news-item-inline">
@@ -940,40 +957,74 @@ with left_col:
         st.markdown("</div>", unsafe_allow_html=True)
 
 with right_col:
-    st.markdown(
-        f"""
-        <div class="panel-head">
-            <div class="panel-title">开封府劳动仲裁官</div>
-            <div class="mode-badge">当前模式：{st.session_state.active_mode}</div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+    with st.container(height=1800, border=False):
+        st.markdown(
+            f"""
+            <div class="panel-head">
+                <div class="panel-title">开封府劳动仲裁官</div>
+                <div class="mode-badge">当前模式：{st.session_state.active_mode}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
-    with st.container(height=560, border=True):
-        for msg in st.session_state.messages:
-            role = "user" if msg["role"] == "user" else "assistant"
-            safe_label = html.escape(msg.get("label", "消息"))
-            safe_time = html.escape(msg.get("time", "刚刚"))
+        with st.container(height=400, border=True):
+            for msg in st.session_state.messages:
+                role = "user" if msg["role"] == "user" else "assistant"
+                safe_label = html.escape(msg.get("label", "消息"))
+                safe_time = html.escape(msg.get("time", "刚刚"))
 
-            if role == "user":
-                safe_content = html.escape(msg["content"]).replace("\n", "<br>")
-                with st.chat_message(role):
+                if role == "user":
+                    safe_content = html.escape(msg["content"]).replace("\n", "<br>")
+                    with st.chat_message(role):
+                        st.markdown(
+                            f"""
+                            <div class="msg-row {role}">
+                                <div class="msg-bubble {role}">
+                                    <div class="msg-meta">
+                                        <span class="msg-name">{safe_label}</span>
+                                        <span class="msg-time">{safe_time}</span>
+                                    </div>
+                                    <div>{safe_content}</div>
+                                </div>
+                            </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+                else:
+                    avatar_class = "assistant-avatar"
+                    avatar_style = ""
+                    if ASSISTANT_AVATAR_BASE64:
+                        avatar_style = f"background-image:url('data:image/jpeg;base64,{ASSISTANT_AVATAR_BASE64}');"
+                    else:
+                        avatar_class += " fallback"
+
                     st.markdown(
                         f"""
-                        <div class="msg-row {role}">
-                            <div class="msg-bubble {role}">
-                                <div class="msg-meta">
-                                    <span class="msg-name">{safe_label}</span>
-                                    <span class="msg-time">{safe_time}</span>
+                        <div class="msg-row assistant">
+                            <div class="assistant-wrap">
+                                <div class="{avatar_class}" style="{avatar_style}"></div>
+                                <div class="msg-bubble assistant markdown-bubble">
+                                    <div class="msg-meta">
+                                        <span class="msg-name">{safe_label}</span>
+                                        <span class="msg-time">{safe_time}</span>
+                                    </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+
+                    st.markdown(msg["content"])
+
+                    st.markdown(
+                        """
                                 </div>
-                                <div>{safe_content}</div>
                             </div>
                         </div>
                         """,
                         unsafe_allow_html=True,
                     )
-            else:
+
+            if st.session_state.is_typing:
                 avatar_class = "assistant-avatar"
                 avatar_style = ""
                 if ASSISTANT_AVATAR_BASE64:
@@ -988,17 +1039,10 @@ with right_col:
                             <div class="{avatar_class}" style="{avatar_style}"></div>
                             <div class="msg-bubble assistant markdown-bubble">
                                 <div class="msg-meta">
-                                    <span class="msg-name">{safe_label}</span>
-                                    <span class="msg-time">{safe_time}</span>
+                                    <span class="msg-name">法智护航</span>
+                                    <span class="msg-time">输入中</span>
                                 </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-
-                st.markdown(msg["content"])
-
-                st.markdown(
-                    """
+                                <div class="typing-dots"><span></span><span></span><span></span></div>
                             </div>
                         </div>
                     </div>
@@ -1006,78 +1050,54 @@ with right_col:
                     unsafe_allow_html=True,
                 )
 
-        if st.session_state.is_typing:
-            avatar_class = "assistant-avatar"
-            avatar_style = ""
-            if ASSISTANT_AVATAR_BASE64:
-                avatar_style = f"background-image:url('data:image/jpeg;base64,{ASSISTANT_AVATAR_BASE64}');"
-            else:
-                avatar_class += " fallback"
+        st.markdown('<div class="func-wrap">', unsafe_allow_html=True)
+        btn0, btn1, btn2, btn3 = st.columns(4)
 
-            st.markdown(
-                f"""
-                <div class="msg-row assistant">
-                    <div class="assistant-wrap">
-                        <div class="{avatar_class}" style="{avatar_style}"></div>
-                        <div class="msg-bubble assistant markdown-bubble">
-                            <div class="msg-meta">
-                                <span class="msg-name">法智护航</span>
-                                <span class="msg-time">输入中</span>
-                            </div>
-                            <div class="typing-dots"><span></span><span></span><span></span></div>
-                        </div>
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
+        with btn0:
+            if st.button("法律咨询", use_container_width=True):
+                switch_mode("法律咨询")
+                st.rerun()
 
-    st.markdown('<div class="func-wrap">', unsafe_allow_html=True)
-btn0, btn1, btn2, btn3 = st.columns(4)
+        with btn1:
+            if st.button("文书生成", use_container_width=True):
+                switch_mode("文书生成")
+                st.rerun()
 
-with btn0:
-    if st.button("法律咨询", use_container_width=True):
-        switch_mode("法律咨询")
-        st.rerun()
+        with btn2:
+            if st.button("文书审查", use_container_width=True):
+                switch_mode("文书审查")
+                st.rerun()
 
-with btn1:
-    if st.button("文书生成", use_container_width=True):
-        switch_mode("文书生成")
-        st.rerun()
+        with btn3:
+            if st.button("合同生成", use_container_width=True):
+                switch_mode("合同生成")
+                st.rerun()
 
-with btn2:
-    if st.button("文书审查", use_container_width=True):
-        switch_mode("文书审查")
-        st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
 
-with btn3:
-    if st.button("合同生成", use_container_width=True):
-        switch_mode("合同生成")
-        st.rerun()
+        #st.markdown('<div class="input-shell">', unsafe_allow_html=True)
+        #st.markdown(
+         #   '<div class="input-tip">请输入案件事实、争议焦点、文书内容或合同需求，系统将根据当前模式通过同一智能体工作流进行处理。</div>',
+          #  unsafe_allow_html=True,
+        #)
 
-st.markdown('</div>', unsafe_allow_html=True)
+        st.text_area(
+            " ",
+            key="user_input",
+            label_visibility="collapsed",
+            placeholder="请输入案件事实、争议焦点、文书内容或合同需求，系统将根据当前模式通过智能体工作流进行处理。",
+            height=110,
+        )
 
-    st.markdown('<div class="input-shell">', unsafe_allow_html=True)
-    st.markdown('<div class="input-title">文字输入</div>', unsafe_allow_html=True)
-    st.markdown(
-        '<div class="input-tip">请输入案件事实、争议焦点、文书内容或合同需求，系统将根据当前模式通过同一智能体工作流进行处理。</div>',
-        unsafe_allow_html=True,
-    )
-    st.text_area(
-        "文字输入",
-        key="user_input",
-        label_visibility="collapsed",
-        placeholder=" ",
-        height=110,
-    )
-    st.markdown('<div class="upload-title">上传附件</div>', unsafe_allow_html=True)
-    st.file_uploader(
-        "上传附件",
-        key="uploaded_files",
-        label_visibility="collapsed",
-        accept_multiple_files=True,
-        type=["txt", "md", "csv", "json", "pdf", "doc", "docx", "png", "jpg", "jpeg"],
-    )
-    st.markdown('<div class="send-row">', unsafe_allow_html=True)
-    st.button("发送", use_container_width=True, on_click=send_message)
-    st.markdown('</div></div>', unsafe_allow_html=True)
+        st.markdown('<div class="upload-title">上传附件</div>', unsafe_allow_html=True)
+        st.file_uploader(
+            "上传附件",
+            key="uploaded_files",
+            label_visibility="collapsed",
+            accept_multiple_files=True,
+            type=["txt", "md", "csv", "json", "pdf", "doc", "docx", "png", "jpg", "jpeg"],
+        )
+
+        st.markdown('<div class="send-row">', unsafe_allow_html=True)
+        st.button("发送", use_container_width=True, on_click=send_message)
+        #st.markdown('</div></div>', unsafe_allow_html=True)
