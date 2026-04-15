@@ -57,14 +57,9 @@ def load_image_base64(path: str) -> str:
 PAGE_BG_BASE64 = load_image_base64("background1.jpg")
 NEWS_BG_BASE64 = load_image_base64("background2.jpg")
 
-st.write("secrets loaded:", dict(st.secrets))
-
 APP_KEY = st.secrets.get("APP_KEY")
 APP_ID = st.secrets.get("APP_ID")
 YUANQI_URL = "https://yuanqi.tencent.com/openapi/v1/agent/chat/completions"
-
-st.write("APP_KEY exists:", bool(APP_KEY))
-st.write("APP_ID exists:", bool(APP_ID))
 
 if not APP_KEY or not APP_ID:
     st.error("未读取到 APP_KEY 或 APP_ID，请检查 Streamlit Cloud Secrets 和当前部署实例。")
