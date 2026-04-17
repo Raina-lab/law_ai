@@ -765,6 +765,8 @@ MODE_CONFIG = {
     "文书生成": {"mode_desc": "文书生成"},
     "文书审查": {"mode_desc": "文书审查"},
     "合同生成": {"mode_desc": "合同生成"},
+    "类案检索": {"mode_desc": "类案检索"},
+    "法规检索": {"mode_desc": "法规检索"},
 }
 
 if "active_mode" not in st.session_state:
@@ -1141,10 +1143,12 @@ with right_col:
                 st.rerun()
 
             if st.button("类案检索", use_container_width=True):
-                st.info("类案检索功能开发中")
+                switch_mode("类案检索")
+                st.rerun()
 
             if st.button("法规检索", use_container_width=True):
-                st.info("法规检索功能开发中")
+                switch_mode("法规检索")
+                st.rerun()
 
             st.markdown('</div>', unsafe_allow_html=True)
 
