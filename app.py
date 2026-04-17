@@ -2,9 +2,11 @@ import html
 import base64
 from pathlib import Path
 from datetime import datetime, timedelta
+from io import BytesIO
 
 import requests
 import streamlit as st
+from docx import Document
 
 st.set_page_config(
     page_title="法智护航",
@@ -50,9 +52,12 @@ def read_uploaded_files(files) -> str:
 
 
 ASSISTANT_AVATAR_BASE64 = load_avatar_base64()
+
+
 def load_image_base64(path: str) -> str:
     p = Path(path)
     return base64.b64encode(p.read_bytes()).decode("utf-8") if p.exists() else ""
+
 
 PAGE_BG_BASE64 = load_image_base64("background1.jpg")
 NEWS_BG_BASE64 = load_image_base64("background2.jpg")
@@ -730,7 +735,6 @@ st.markdown(
             display: none !important;
         }
 
-
         @media (max-width: 1100px) {
             .panel-head {
                 flex-direction: column;
@@ -773,9 +777,11 @@ if "messages" not in st.session_state:
             "label": "法智护航",
             "content": """您好，欢迎使用法智护航。未选择下方专项功能时，系统将默认按照普通法律咨询流程处理；选择专项功能后，再进入对应服务流程。
             
-文书生成：指根据需求，自动撰写、制作申请书、声明、证明、委托书、起诉状、答辩状、协议、合同等。
-文书审查：对已经写好的合同文本进行法律风险检查、条款分析、漏洞查找，帮你挑错、避雷、看风险。
- 合同生成：专门针对合同类文件进行撰写与制作。根据交易场景（买卖、租赁、服务、合作、借款等），生成结构完整、条款规范的合同文本。
+文书生成：指根据需求，自动撰写、制作委托书、合同等。
+
+文书审查：对已经写好的合同文本帮你挑错、避雷、看风险。
+
+合同生成：根据交易场景，生成结构完整、条款规范的合同文本。
 
 示例问题：
 1. 工作3年2个月，月薪1万5，被裁该赔多少？
@@ -788,10 +794,32 @@ if "messages" not in st.session_state:
 if "is_typing" not in st.session_state:
     st.session_state.is_typing = False
 
+if "generated_docx" not in st.session_state:
+    st.session_state.generated_docx = None
+
+if "generated_docx_name" not in st.session_state:
+    st.session_state.generated_docx_name = "法律文书.docx"
+
 
 def trim_messages() -> None:
     if len(st.session_state.messages) > 12:
         st.session_state.messages = [st.session_state.messages[0]] + st.session_state.messages[-11:]
+
+
+def build_word_doc(text: str) -> BytesIO:
+    doc = Document()
+
+    for line in text.split("\n"):
+        line = line.strip()
+        if line:
+            doc.add_paragraph(line)
+        else:
+            doc.add_paragraph("")
+
+    bio = BytesIO()
+    doc.save(bio)
+    bio.seek(0)
+    return bio
 
 
 def call_yuanqi_api(mode: str, prompt: str) -> str:
@@ -911,6 +939,15 @@ def send_message() -> None:
         }
     )
 
+    if st.session_state.active_mode in ["合同生成", "文书生成"]:
+        st.session_state.generated_docx = build_word_doc(reply)
+        if st.session_state.active_mode == "合同生成":
+            st.session_state.generated_docx_name = "合同文本.docx"
+        else:
+            st.session_state.generated_docx_name = "法律文书.docx"
+    else:
+        st.session_state.generated_docx = None
+
     trim_messages()
     st.session_state.user_input = ""
     st.session_state.is_typing = False
@@ -942,7 +979,25 @@ with left_col:
             '<div class="news-wrap"><div class="news-heading-inline">新闻速递</div>',
             unsafe_allow_html=True,
         )
-
+        NEWS_LINKS = {
+            "外卖骑手注册“个体户”仍被认定劳动关系（最高法指导案例）": "https://www.court.gov.cn/shenpan/xiangqing/450731.html",
+            "济南网约取件员劳动关系确认案": "http://www.qdlabour.com/gspc/202510/847.html",
+            "网络主播案（成都案例）": "https://www.sichuanpeace.gov.cn/azsf/20260326/2995725.html",
+            "北京怀柔：算法管理 = 用工主体责任": "https://hrqfy.bjcourt.gov.cn/article/detail/2025/04/id/8812222.shtml",
+            "上海一中院：严惩“恶意封号”": "https://www.a-court.gov.cn/xxfb/no1court_412/docs/202507/d_-6306.html",
+            "临沂兰山“拒不支付劳动报酬罪”系列案": "https://rsj.linyi.gov.cn/info/1072/43272.htm",
+            "77名船员近千万工资“一站式”调解": "http://tgxfy.sxfywcourt.gov.cn/article/detail/2026/01/id/9143955.shtml",
+            "江苏南京：普通厨师“无密可保”案": "https://www.court.gov.cn/zixun/xiangqing/468431.html",
+            "推拿师李某案（最高法典型案例）": "http://www.zh-hz.cn/news.html?aid=1808257",
+            "高管配偶代持股案": "https://www.moj.gov.cn/pub/sfbgw/jgsz/gjjwzsfbjjz/zyzsfbjjzywjl/202601/t20260107_530238.html",
+            "济南汽车公司“期票扣款”案": "https://www5.zzu.edu.cn/fxyzx/info/1005/7456.htm",
+            "章丘法院“负激励”无效案": "https://www.qlwb.com.cn/detail/21721546.html",
+            "人事高管索要二倍工资被驳回": "https://bjgy.bjcourt.gov.cn/article/detail/2017/12/id/3131781.shtml",
+            "“1元卖公司”恶意逃债被撤销": "https://www.zjsfgkw.gov.cn/art/2026/1/21/art_56_44800.html",
+            "孕期调岗降薪违法": "https://www.sichuanpeace.gov.cn/gcsy/20250418/2962303.html",
+            "“自愿放弃社保”无效": "https://www.lyg.gov.cn/zglygzfmhwz/rdhy/content/edf3685a-5723-4c6f-ad30-646283db71e7.html",
+            "天津：新业态职业伤害保障试点": "https://hrss.tj.gov.cn/zhengwugongkai/zhengcezhinan/zcjdnew/202508/t20250801_7103306.html",
+        }
         for section in NEWS_CONTENT:
             st.markdown(
                 f'<div class="news-section-inline">{html.escape(section["section"])}</div>',
@@ -951,18 +1006,23 @@ with left_col:
 
             for item in section["items"]:
                 body_html = html.escape(item["body"]).replace("\n", "<br>")
+                link = NEWS_LINKS.get(item["title"], "#")
 
                 st.markdown(
                     f"""
                     <div class="news-item-inline">
-                        <div class="news-item-title-inline">{html.escape(item["title"])}</div>
+                        <div class="news-item-title-inline">
+                            <a href="{link}" target="_blank" style="text-decoration:none;color:#0f172a;">
+                                {html.escape(item["title"])}
+                            </a>
+                        </div>
                         <div class="news-body-inline">{body_html}</div>
                     </div>
                     """,
                     unsafe_allow_html=True,
                 )
 
-        st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
 with right_col:
     with st.container(height=1800, border=False):
@@ -976,30 +1036,66 @@ with right_col:
             unsafe_allow_html=True,
         )
 
-        with st.container(height=400, border=True):
-            for msg in st.session_state.messages:
-                role = "user" if msg["role"] == "user" else "assistant"
-                safe_label = html.escape(msg.get("label", "消息"))
-                safe_time = html.escape(msg.get("time", "刚刚"))
+        output_col, action_col = st.columns([0.84, 0.16], gap="small")
 
-                if role == "user":
-                    safe_content = html.escape(msg["content"]).replace("\n", "<br>")
-                    with st.chat_message(role):
+        with output_col:
+            with st.container(height=400, border=True):
+                for msg in st.session_state.messages:
+                    role = "user" if msg["role"] == "user" else "assistant"
+                    safe_label = html.escape(msg.get("label", "消息"))
+                    safe_time = html.escape(msg.get("time", "刚刚"))
+
+                    if role == "user":
+                        safe_content = html.escape(msg["content"]).replace("\n", "<br>")
+                        with st.chat_message(role):
+                            st.markdown(
+                                f"""
+                                <div class="msg-row {role}">
+                                    <div class="msg-bubble {role}">
+                                        <div class="msg-meta">
+                                            <span class="msg-name">{safe_label}</span>
+                                            <span class="msg-time">{safe_time}</span>
+                                        </div>
+                                        <div>{safe_content}</div>
+                                    </div>
+                                </div>
+                                """,
+                                unsafe_allow_html=True,
+                            )
+                    else:
+                        avatar_class = "assistant-avatar"
+                        avatar_style = ""
+                        if ASSISTANT_AVATAR_BASE64:
+                            avatar_style = f"background-image:url('data:image/jpeg;base64,{ASSISTANT_AVATAR_BASE64}');"
+                        else:
+                            avatar_class += " fallback"
+
                         st.markdown(
                             f"""
-                            <div class="msg-row {role}">
-                                <div class="msg-bubble {role}">
-                                    <div class="msg-meta">
-                                        <span class="msg-name">{safe_label}</span>
-                                        <span class="msg-time">{safe_time}</span>
+                            <div class="msg-row assistant">
+                                <div class="assistant-wrap">
+                                    <div class="{avatar_class}" style="{avatar_style}"></div>
+                                    <div class="msg-bubble assistant markdown-bubble">
+                                        <div class="msg-meta">
+                                            <span class="msg-name">{safe_label}</span>
+                                            <span class="msg-time">{safe_time}</span>
+                                        </div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+
+                        st.markdown(msg["content"])
+
+                        st.markdown(
+                            """
                                     </div>
-                                    <div>{safe_content}</div>
                                 </div>
                             </div>
                             """,
                             unsafe_allow_html=True,
                         )
-                else:
+
+                if st.session_state.is_typing:
                     avatar_class = "assistant-avatar"
                     avatar_style = ""
                     if ASSISTANT_AVATAR_BASE64:
@@ -1014,17 +1110,10 @@ with right_col:
                                 <div class="{avatar_class}" style="{avatar_style}"></div>
                                 <div class="msg-bubble assistant markdown-bubble">
                                     <div class="msg-meta">
-                                        <span class="msg-name">{safe_label}</span>
-                                        <span class="msg-time">{safe_time}</span>
+                                        <span class="msg-name">法智护航</span>
+                                        <span class="msg-time">输入中</span>
                                     </div>
-                        """,
-                        unsafe_allow_html=True,
-                    )
-
-                    st.markdown(msg["content"])
-
-                    st.markdown(
-                        """
+                                    <div class="typing-dots"><span></span><span></span><span></span></div>
                                 </div>
                             </div>
                         </div>
@@ -1032,62 +1121,32 @@ with right_col:
                         unsafe_allow_html=True,
                     )
 
-            if st.session_state.is_typing:
-                avatar_class = "assistant-avatar"
-                avatar_style = ""
-                if ASSISTANT_AVATAR_BASE64:
-                    avatar_style = f"background-image:url('data:image/jpeg;base64,{ASSISTANT_AVATAR_BASE64}');"
-                else:
-                    avatar_class += " fallback"
+        with action_col:
+            st.markdown('<div class="func-wrap">', unsafe_allow_html=True)
 
-                st.markdown(
-                    f"""
-                    <div class="msg-row assistant">
-                        <div class="assistant-wrap">
-                            <div class="{avatar_class}" style="{avatar_style}"></div>
-                            <div class="msg-bubble assistant markdown-bubble">
-                                <div class="msg-meta">
-                                    <span class="msg-name">法智护航</span>
-                                    <span class="msg-time">输入中</span>
-                                </div>
-                                <div class="typing-dots"><span></span><span></span><span></span></div>
-                            </div>
-                        </div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-
-        st.markdown('<div class="func-wrap">', unsafe_allow_html=True)
-        btn0, btn1, btn2, btn3 = st.columns(4)
-
-        with btn0:
             if st.button("法律咨询", use_container_width=True):
                 switch_mode("法律咨询")
                 st.rerun()
 
-        with btn1:
             if st.button("文书生成", use_container_width=True):
                 switch_mode("文书生成")
                 st.rerun()
 
-        with btn2:
             if st.button("文书审查", use_container_width=True):
                 switch_mode("文书审查")
                 st.rerun()
 
-        with btn3:
             if st.button("合同生成", use_container_width=True):
                 switch_mode("合同生成")
                 st.rerun()
 
-        st.markdown('</div>', unsafe_allow_html=True)
+            if st.button("类案检索", use_container_width=True):
+                st.info("类案检索功能开发中")
 
-        #st.markdown('<div class="input-shell">', unsafe_allow_html=True)
-        #st.markdown(
-         #   '<div class="input-tip">请输入案件事实、争议焦点、文书内容或合同需求，系统将根据当前模式通过同一智能体工作流进行处理。</div>',
-          #  unsafe_allow_html=True,
-        #)
+            if st.button("法规检索", use_container_width=True):
+                st.info("法规检索功能开发中")
+
+            st.markdown('</div>', unsafe_allow_html=True)
 
         st.text_area(
             " ",
@@ -1108,4 +1167,14 @@ with right_col:
 
         st.markdown('<div class="send-row">', unsafe_allow_html=True)
         st.button("发送", use_container_width=True, on_click=send_message)
+
+        if st.session_state.generated_docx is not None:
+            st.download_button(
+                "下载 Word",
+                data=st.session_state.generated_docx,
+                file_name=st.session_state.generated_docx_name,
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                use_container_width=True,
+            )
+
         #st.markdown('</div></div>', unsafe_allow_html=True)
