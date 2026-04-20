@@ -62,8 +62,8 @@ def load_image_base64(path: str) -> str:
 PAGE_BG_BASE64 = load_image_base64("background1.jpg")
 NEWS_BG_BASE64 = load_image_base64("background2.jpg")
 
-APP_KEY = st.secrets.get("APP_KEY") 
-APP_ID = st.secrets.get("APP_ID")
+APP_KEY = "FSP02pxwQHtKiGy7j0uHCRLibwpZ83Vx"
+APP_ID = "2038904769354925120"
 YUANQI_URL = "https://yuanqi.tencent.com/openapi/v1/agent/chat/completions"
 
 if not APP_KEY or not APP_ID:
@@ -761,6 +761,13 @@ st.markdown(
             border: none !important;
             border-radius: 18px !important;
             box-shadow: 0 14px 26px rgba(37, 99, 235, 0.24) !important;
+        }
+        div[data-testid="stFileUploader"] label {
+            color: #e2e8f0 !important;
+        }
+
+        div[data-testid="stFileUploader"] div[data-testid="stMarkdownContainer"] p {
+            color: #94a3b8 !important;
         }
     </style>
     """.replace("__PAGE_BG__", PAGE_BG_BASE64).replace("__NEWS_BG__", NEWS_BG_BASE64),
