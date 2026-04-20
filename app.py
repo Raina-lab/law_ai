@@ -62,8 +62,7 @@ def load_image_base64(path: str) -> str:
 PAGE_BG_BASE64 = load_image_base64("background1.jpg")
 NEWS_BG_BASE64 = load_image_base64("background2.jpg")
 
-APP_KEY = st.secrets.get("APP_KEY")
-APP_ID = st.secrets.get("APP_ID")
+APP_KEY = st.secrets.get("APP_KEY") APP_ID = st.secrets.get("APP_ID")
 YUANQI_URL = "https://yuanqi.tencent.com/openapi/v1/agent/chat/completions"
 
 if not APP_KEY or not APP_ID:
@@ -755,6 +754,13 @@ st.markdown(
         footer {
             display: none !important;
         }
+        div[data-testid="stDownloadButton"] button {
+            background: linear-gradient(135deg, #2563eb 0%, #60a5fa 100%) !important;
+            color: white !important;
+            border: none !important;
+            border-radius: 18px !important;
+            box-shadow: 0 14px 26px rgba(37, 99, 235, 0.24) !important;
+        }
     </style>
     """.replace("__PAGE_BG__", PAGE_BG_BASE64).replace("__NEWS_BG__", NEWS_BG_BASE64),
     unsafe_allow_html=True,
@@ -763,7 +769,7 @@ st.markdown(
 MODE_CONFIG = {
     "法律咨询": {"mode_desc": "普通法律咨询"},
     "文书生成": {"mode_desc": "文书生成"},
-    "文书审查": {"mode_desc": "文书审查"},
+    "合同审查": {"mode_desc": "合同审查"},
     "合同生成": {"mode_desc": "合同生成"},
     "类案检索": {"mode_desc": "类案检索"},
     "法规检索": {"mode_desc": "法规检索"},
@@ -781,7 +787,7 @@ if "messages" not in st.session_state:
             
 文书生成：指根据需求，自动撰写、制作委托书、合同等。
 
-文书审查：对已经写好的合同文本帮你挑错、避雷、看风险。
+合同审查：对已经写好的合同文本帮你挑错、避雷、看风险。
 
 合同生成：根据交易场景，生成结构完整、条款规范的合同文本。
 
@@ -830,7 +836,7 @@ def call_yuanqi_api(mode: str, prompt: str) -> str:
 请严格按照当前模式处理用户请求。
 如果当前模式是法律咨询，请进行法律分析和维权建议；
 如果当前模式是文书生成，请生成对应法律文书；
-如果当前模式是文书审查，请进行审查并提出修改意见；
+如果当前模式是合同审查，请进行审查并提出修改意见；
 如果当前模式是合同生成，请输出合同文本草案。
 
 请使用清晰、自然、适合网页展示的 Markdown 格式输出，避免输出多余代码符号说明。
@@ -841,13 +847,13 @@ def call_yuanqi_api(mode: str, prompt: str) -> str:
 
     try:
         res = requests.post(
-            YUANQI_URL,
+            "https://yuanqi.tencent.com/openapi/v1/agent/chat/completions",  # 正确的地址
             headers={
                 "Content-Type": "application/json",
-                "Authorization": f"Bearer {APP_KEY}",
+                "Authorization": f"Bearer {APP_KEY}",  # 注意是 Bearer + 空格 + token
             },
             json={
-                "assistant_id": APP_ID,
+                "assistant_id": APP_ID,  # 注意字段名是 assistant_id
                 "user_id": "law_ai_user",
                 "stream": False,
                 "messages": [
@@ -856,26 +862,27 @@ def call_yuanqi_api(mode: str, prompt: str) -> str:
                         "content": [
                             {
                                 "type": "text",
-                                "text": final_prompt,
+                                "text": final_prompt
                             }
-                        ],
+                        ]
                     }
                 ],
             },
             timeout=60,
         )
 
-        data = res.json()
+        print(f"状态码: {res.status_code}")
+        print(f"返回内容: {res.text}")
 
         if res.status_code != 200:
-            return f"请求出错：{res.status_code} - {data}"
+            return f"API 调用失败 ({res.status_code}): {res.text}"
 
+        data = res.json()
+        # 解析返回结果
         return data.get("choices", [{}])[0].get("message", {}).get("content", "未获取到回复")
 
-    except requests.exceptions.RequestException as e:
-        return f"请求出错：{str(e)}"
     except Exception as e:
-        return f"结果解析失败：{str(e)}"
+        return f"请求异常: {str(e)}"
 
 
 def switch_mode(mode: str) -> None:
@@ -968,7 +975,7 @@ with left_col:
                 <span class="brand-highlight">欠薪追责</span>、
                 <span class="brand-highlight">竞业限制</span>与
                 <span class="brand-highlight">社保保障</span>等劳动法热点，
-                左侧栏目实时汇集典型案例、裁判规则与维权指引。
+                左侧栏目实时汇集典型案例（电脑端点击可查看）、裁判规则与维权指引。
             </div>
         </div>
         """,
@@ -1041,7 +1048,7 @@ with right_col:
         output_col, action_col = st.columns([0.84, 0.16], gap="small")
 
         with output_col:
-            with st.container(height=400, border=True):
+            with st.container(height=500, border=True):
                 for msg in st.session_state.messages:
                     role = "user" if msg["role"] == "user" else "assistant"
                     safe_label = html.escape(msg.get("label", "消息"))
@@ -1134,8 +1141,8 @@ with right_col:
                 switch_mode("文书生成")
                 st.rerun()
 
-            if st.button("文书审查", use_container_width=True):
-                switch_mode("文书审查")
+            if st.button("合同审查", use_container_width=True):
+                switch_mode("合同审查")
                 st.rerun()
 
             if st.button("合同生成", use_container_width=True):
