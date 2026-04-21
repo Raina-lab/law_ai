@@ -839,6 +839,8 @@ def build_word_doc(text: str) -> BytesIO:
 
 
 def call_yuanqi_api(mode: str, prompt: str) -> str:
+    import time
+    
     final_prompt = f"""当前服务模式：{mode}
 
 请严格按照当前模式处理用户请求。
@@ -853,43 +855,52 @@ def call_yuanqi_api(mode: str, prompt: str) -> str:
 {prompt}
 """
 
-    try:
-        res = requests.post(
-            YUANQI_URL,
-            headers={
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {APP_KEY}",
-            },
-            json={
-                "assistant_id": APP_ID,
-                "user_id": "law_ai_user",
-                "stream": False,
-                "messages": [
-                    {
-                        "role": "user",
-                        "content": [
-                            {
-                                "type": "text",
-                                "text": final_prompt,
-                            }
-                        ],
-                    }
-                ],
-            },
-            timeout=60,
-        )
-
-        data = res.json()
-
-        if res.status_code != 200:
-            return f"请求出错：{res.status_code} - {data}"
-
-        return data.get("choices", [{}])[0].get("message", {}).get("content", "未获取到回复")
-
-    except requests.exceptions.RequestException as e:
-        return f"请求出错：{str(e)}"
-    except Exception as e:
-        return f"结果解析失败：{str(e)}"
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            res = requests.post(
+                YUANQI_URL,
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {APP_KEY}",
+                },
+                json={
+                    "assistant_id": APP_ID,
+                    "user_id": "law_ai_user",
+                    "stream": False,
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": [
+                                {
+                                    "type": "text",
+                                    "text": final_prompt,
+                                }
+                            ],
+                        }
+                    ],
+                },
+                timeout=60,
+            )
+            
+            data = res.json()
+            
+            if res.status_code == 200:
+                return data.get("choices", [{}])[0].get("message", {}).get("content", "未获取到回复")
+            elif res.status_code == 429 and attempt < max_retries - 1:
+                # 并发超限，等待后重试（1秒、2秒、4秒）
+                time.sleep(2 ** attempt)
+                continue
+            else:
+                return f"请求出错：{res.status_code} - {data}"
+                
+        except Exception as e:
+            if attempt < max_retries - 1:
+                time.sleep(2 ** attempt)
+                continue
+            return f"请求失败：{str(e)}"
+    
+    return "请求失败：超过重试次数"
 
 def switch_mode(mode: str) -> None:
     st.session_state.active_mode = mode
