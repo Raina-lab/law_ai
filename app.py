@@ -62,9 +62,9 @@ def load_image_base64(path: str) -> str:
 PAGE_BG_BASE64 = load_image_base64("background1.jpg")
 NEWS_BG_BASE64 = load_image_base64("background2.jpg")
 
-APP_KEY = "FSP02pxwQHtKiGy7j0uHCRLibwpZ83Vx"
-APP_ID = "2038904769354925120"
-YUANQI_URL = "https://yuanqi.tencent.com/openapi/v1/agent/chat/completions"
+APP_KEY = st.secrets.get("APP_KEY") 
+APP_ID = st.secrets.get("APP_ID")
+YUANQI_URL = "https://open.hunyuan.tencent.com/openapi/v1/agent/chat/completions"
 
 if not APP_KEY or not APP_ID:
     st.error("未读取到 APP_KEY 或 APP_ID，请检查 Streamlit Cloud Secrets 和当前部署实例。")
@@ -855,13 +855,13 @@ def call_yuanqi_api(mode: str, prompt: str) -> str:
 
     try:
         res = requests.post(
-            "https://yuanqi.tencent.com/openapi/v1/agent/chat/completions",  # 正确的地址
+            YUANQI_URL,
             headers={
                 "Content-Type": "application/json",
-                "Authorization": f"Bearer {APP_KEY}",  # 注意是 Bearer + 空格 + token
+                "Authorization": f"Bearer {APP_KEY}",
             },
             json={
-                "assistant_id": APP_ID,  # 注意字段名是 assistant_id
+                "assistant_id": APP_ID,
                 "user_id": "law_ai_user",
                 "stream": False,
                 "messages": [
@@ -870,27 +870,26 @@ def call_yuanqi_api(mode: str, prompt: str) -> str:
                         "content": [
                             {
                                 "type": "text",
-                                "text": final_prompt
+                                "text": final_prompt,
                             }
-                        ]
+                        ],
                     }
                 ],
             },
             timeout=60,
         )
 
-        print(f"状态码: {res.status_code}")
-        print(f"返回内容: {res.text}")
+        data = res.json()
 
         if res.status_code != 200:
-            return f"API 调用失败 ({res.status_code}): {res.text}"
+            return f"请求出错：{res.status_code} - {data}"
 
-        data = res.json()
-        # 解析返回结果
         return data.get("choices", [{}])[0].get("message", {}).get("content", "未获取到回复")
 
+    except requests.exceptions.RequestException as e:
+        return f"请求出错：{str(e)}"
     except Exception as e:
-        return f"请求异常: {str(e)}"
+        return f"结果解析失败：{str(e)}"
 
 
 def switch_mode(mode: str) -> None:
