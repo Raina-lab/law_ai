@@ -64,7 +64,7 @@ NEWS_BG_BASE64 = load_image_base64("background2.jpg")
 
 APP_KEY = st.secrets.get("APP_KEY") 
 APP_ID = st.secrets.get("APP_ID")
-YUANQI_URL = "https://open.hunyuan.tencent.com/openapi/v1/agent/chat/completions"
+YUANQI_URL = "https://open.hunyuan.tencent.com/openapi/v1/chat/completions"
 
 if not APP_KEY or not APP_ID:
     st.error("未读取到 APP_KEY 或 APP_ID，请检查 Streamlit Cloud Secrets 和当前部署实例。")
@@ -861,20 +861,14 @@ def call_yuanqi_api(mode: str, prompt: str) -> str:
                 "Authorization": f"Bearer {APP_KEY}",
             },
             json={
-                "assistant_id": APP_ID,
-                "user_id": "law_ai_user",
-                "stream": False,
+                "model": "hunyuan-turbo",  # ← 改成 model，不是 assistant_id
                 "messages": [
                     {
                         "role": "user",
-                        "content": [
-                            {
-                                "type": "text",
-                                "text": final_prompt,
-                            }
-                        ],
+                        "content": final_prompt  # ← content 直接是字符串，不是数组
                     }
                 ],
+                "stream": False
             },
             timeout=60,
         )
@@ -884,6 +878,7 @@ def call_yuanqi_api(mode: str, prompt: str) -> str:
         if res.status_code != 200:
             return f"请求出错：{res.status_code} - {data}"
 
+        # 响应格式也可能不同
         return data.get("choices", [{}])[0].get("message", {}).get("content", "未获取到回复")
 
     except requests.exceptions.RequestException as e:
