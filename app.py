@@ -62,8 +62,8 @@ def load_image_base64(path: str) -> str:
 PAGE_BG_BASE64 = load_image_base64("background1.jpg")
 NEWS_BG_BASE64 = load_image_base64("background2.jpg")
 
-APP_KEY = "FSP02pxwQHtKiGy7j0uHCRLibwpZ83Vx"
-APP_ID = "2038904769354925120"
+APP_KEY = st.secrets.get("APP_KEY")
+APP_ID = st.secrets.get("APP_ID")
 YUANQI_URL = "https://yuanqi.tencent.com/openapi/v1/agent/chat/completions"
 
 if not APP_KEY or not APP_ID:
